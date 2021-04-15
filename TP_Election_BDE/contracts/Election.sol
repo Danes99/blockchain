@@ -10,10 +10,14 @@ contract Election is Ownable {
 using SafeMath for uint256;
 
     // Model a Candidate
-    struct Candidate {
+    struct Participant {
+
+        // ID
         uint256 id;
         string name;
-        uint voteCount;
+        // uint voteCount;
+        bool hasVoted;
+        string status;
     }
 
     // Store accounts that have voted
@@ -31,9 +35,18 @@ using SafeMath for uint256;
     //     candidatesCount ++;
     //     candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
     // }
-    function addCandidate (string memory _name) public onlyOwner {
-        candidatesCount ++;
-        candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
+    function createParticipant (string memory _name) public onlyOwner {
+
+        // One more participant in the array
+        participantsCount ++;
+
+        // Added new participant in the array
+        participantsCount[participantsCount] = Participant(
+            participantsCount, 
+            _name, 
+            0, 
+            null
+        );
     }
 
     function vote (uint _candidateId) public {
