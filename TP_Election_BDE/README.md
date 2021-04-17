@@ -1,5 +1,11 @@
 # Elections
 
+## Libraries
+
+### OpenZeplin
+
+- whitelist.sol
+
 ## Class
 
 - Contract
@@ -17,7 +23,8 @@
 - createTeam: public Participant
 - joinTeam: public Participant
 
-- transferOwnershipTeam: public Participant
+- updatePresident: public Participant
+- createMember: public Participant
 
 - isMember
 - isTeamVotable

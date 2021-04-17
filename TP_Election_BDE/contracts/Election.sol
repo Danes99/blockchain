@@ -9,60 +9,125 @@ contract Election is Ownable {
 
 using SafeMath for uint256;
 
-    // Model a Candidate
+    // Model a Participant
     struct Participant {
 
-        // ID
         uint256 id;
         string name;
-        // uint voteCount;
         bool hasVoted;
         string status;
     }
 
-    // Store accounts that have voted
-    mapping(address => bool) public voters;
-    // Store Candidates
-    // Fetch Candidate
-    mapping(uint => Candidate) public candidates;
-    // Store Candidates Count
-    uint public candidatesCount;
+    // Model a Team
+    struct Team {
 
-    // voted event
+        uint256 id;
+        string name;
+        bool isVotable;
+        uint voteCount;
+    }
+
+    // Election status
+    bool public hasElectionStarted;
+    bool public isElectionRunning;
+    
+    // Counters
+    uint public teamsCount;
+    uint public participantsCount;
+    
+    // Store list of participants
+    mapping(address => Participant) public participants;
+    
+    // Store list of teams
+    mapping(address => Team) public teams;
+
+    // Voted event
     event votedEvent ( uint indexed _candidateId);
 
-    // function addCandidate (string memory _name) public {
-    //     candidatesCount ++;
-    //     candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
-    // }
-    function createParticipant (string memory _name) public onlyOwner {
+    function runElection (bool _status) public onlyOwner {
 
-        // One more participant in the array
+        if (!hasElectionStarted && _status) {
+            hasElectionStarted = true;
+        }
+
+        isElectionRunning = _status;
+    }
+
+    function createParticipant (address _address, string memory _name) public onlyOwner {
+        
+        // Cannot add participant if election started 
+        require(!hasElectionStarted);
+
+        // Increment counter
         participantsCount ++;
 
-        // Added new participant in the array
-        participantsCount[participantsCount] = Participant(
+        // Add new participant in the array
+        participants[_address] = Participant(
             participantsCount, 
             _name, 
-            0, 
-            null
+            false, 
+            ""
         );
     }
 
-    function vote (uint _candidateId) public {
-        // require that they haven't voted before
+    function deleteParticipant (address _address) public onlyOwner {
+
+
+    }
+    
+    function createTeamTest () public view returns(uint) {
+        
+        // Must be in participants
+        return participants[msg.sender].id;
+        
+    }
+    
+    
+
+    function createTeam (string memory _name) public {
+        
+        // Must be in participants
+        require(participants[msg.sender].id != 0, "Must be participant");
+        
+        // Cannot create team if already created one
+        require(teams[msg.sender].id == 0, "Already created a team");
+        
+        // Increment counter
+        teamsCount ++;
+
+        // Add new participant in the array
+        teams[msg.sender] = Team(
+            teamsCount, 
+            _name, 
+            false, 
+            0
+        );
+        
+    }
+
+    function joinTeam (string memory _id) public {
+
+    }
+
+    /*function createMember (address memory _address) public {
+
+    }*/
+
+    /*function vote (uint _candidateId) public {
+        
+        // Require that they haven't voted before
         require(!voters[msg.sender]);
 
-        // require a valid candidate
+        // Require a valid team id
         require(_candidateId > 0 && _candidateId <= candidatesCount);
 
-        // record that voter has voted
+        // Record that participant has voted
         voters[msg.sender] = true;
 
-        // update candidate vote Count
+        // Update team vote Count
         candidates[_candidateId].voteCount ++;
 
-        // trigger voted event
+        // Trigger voted event
         emit votedEvent (_candidateId);
-    }
+    }*/
 }
