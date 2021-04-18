@@ -24,7 +24,7 @@
 - joinTeam: public Participant
 
 - updatePresident: public Participant
-- createMember: public Participant
+- createTeamMember: public Participant
 
 - isMember
 - isTeamVotable
