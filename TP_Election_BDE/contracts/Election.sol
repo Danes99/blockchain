@@ -36,8 +36,12 @@ using SafeMath for uint256;
         address memberSecretary;
         address memberTresury;
         
+        // Team members status
         bool hasMemberSecretaryJoined;
         bool hasMemberTresuryJoined;
+        
+        // Team president update
+        address temporaryTransfertAddress;
     }
 
     // Election status
@@ -142,7 +146,7 @@ using SafeMath for uint256;
         // Increment counter
         teamsCount ++;
 
-        // Add new participant in the array
+        // Create new team
         teams[msg.sender] = Team(
             teamsCount, 
             _name, 
@@ -151,7 +155,8 @@ using SafeMath for uint256;
             nullAdress,
             nullAdress,
             false,
-            false
+            false,
+            nullAdress
         );
         
         // Update team address
@@ -247,29 +252,35 @@ using SafeMath for uint256;
         // Target cannot be team member
         require(participants[_address].teamAddress == nullAdress, "Target must not be team member");
         
-        // Duplicate sender's team to receiver address
-        teams[_address] = teams[msg.sender];
+        // Set team presidency transfert waiting
+        teams[msg.sender].temporaryTransfertAddress = _address;
+    }
+    
+    function acceptTeamPresidency(address _address) public {
         
-        // Update Member: secretary
-        address memberSecretary = teams[msg.sender].memberSecretary;
-        if (memberSecretary != nullAdress) {
-            participants[memberSecretary].teamAddress = _address;
-        }
+        // Election must not have started
+        require(!hasElectionStarted, "Election has already started");
         
-        // Member: tresury
-        address memberTresury = teams[msg.sender].memberTresury;
-        if (memberTresury != nullAdress) {
-            participants[memberTresury].teamAddress = _address;
-        }
+        // Must be in participants
+        require(participants[msg.sender].id != 0, "Must be participant");
         
-        // Update member: former president
-        participants[msg.sender].teamAddress = nullAdress;
+        // Sender cannot be president
+        require(teams[msg.sender].id == 0, "Target already is president");
         
-        // Update member: new president
-        participants[_address].teamAddress = _address;
+        // Sender cannot be team member
+        require(participants[msg.sender].teamAddress == nullAdress, "Target must not be team member");
         
-        // Delete former team
-        delete teams[msg.sender];
+        // Target team must exist 
+        require(teams[_address].id != 0, "Team has to be created");
+        
+        // Target team must be wating for presidency update
+        require(teams[_address].temporaryTransfertAddress == msg.sender, "No team presidency transfert");
+        
+        // Update team presidency
+        updateTeamAddress(_address, msg.sender);
+        
+        // Reset waiting
+        teams[msg.sender].temporaryTransfertAddress = nullAdress;
     }
 
     function vote (address _address) public {
@@ -297,6 +308,33 @@ using SafeMath for uint256;
 
         // Trigger voted event
         emit votedEvent (_address);
+    }
+    
+    function updateTeamAddress (address _formerAddress, address _newAddress) private {
+        
+        // Duplicate sender's team to receiver address
+        teams[_newAddress] = teams[_formerAddress];
+        
+        // Update Member: secretary
+        address memberSecretary = teams[_formerAddress].memberSecretary;
+        if (memberSecretary != nullAdress) {
+            participants[memberSecretary].teamAddress = _newAddress;
+        }
+        
+        // Member: tresury
+        address memberTresury = teams[_formerAddress].memberTresury;
+        if (memberTresury != nullAdress) {
+            participants[memberTresury].teamAddress = _newAddress;
+        }
+        
+        // Update member: former president
+        participants[_formerAddress].teamAddress = nullAdress;
+        
+        // Update member: new president
+        participants[_newAddress].teamAddress = _newAddress;
+        
+        // Delete former team
+        delete teams[_formerAddress];
     }
     
     function updateTeamIsVotable(address _address) private {
