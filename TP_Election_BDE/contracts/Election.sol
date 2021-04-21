@@ -41,7 +41,7 @@ using SafeMath for uint256;
         bool hasMemberTresuryJoined;
         
         // Team president update
-        address temporaryTransfertAddress;
+        address temporaryTransferAddress;
     }
 
     // Election status
@@ -56,8 +56,11 @@ using SafeMath for uint256;
     mapping(address => Participant) public participants;
     mapping(address => Team) public teams;
 
-    // Voted event
-    event votedEvent ( address indexed _address);
+    // Events
+    event eventVoted (address indexed _address);
+    event eventTeamCreate (address indexed _address);
+    event eventTeamJoin (address indexed _addressMember, address indexed _addressTeam);
+    event eventTeamTranfer (address indexed _addressFormer, address indexed _addressNew);
 
     function runElection (bool _status) public onlyOwner {
 
@@ -161,6 +164,9 @@ using SafeMath for uint256;
         
         // Update team address
         participants[msg.sender].teamAddress = msg.sender;
+        
+        // Trigger event: team create
+        emit eventVoted (msg.sender);
     }
     
     function createTeamMember (address _address, uint _status) public {
@@ -233,6 +239,9 @@ using SafeMath for uint256;
         
         // Update team state
         updateTeamIsVotable(_address);
+        
+        // Trigger event: team join
+        emit eventTeamJoin (msg.sender, _address);
     }
     
     function updateTeamPresident (address _address) public {
@@ -253,7 +262,7 @@ using SafeMath for uint256;
         require(participants[_address].teamAddress == nullAdress, "Target must not be team member");
         
         // Set team presidency transfert waiting
-        teams[msg.sender].temporaryTransfertAddress = _address;
+        teams[msg.sender].temporaryTransferAddress = _address;
     }
     
     function acceptTeamPresidency(address _address) public {
@@ -274,13 +283,13 @@ using SafeMath for uint256;
         require(teams[_address].id != 0, "Team has to be created");
         
         // Target team must be wating for presidency update
-        require(teams[_address].temporaryTransfertAddress == msg.sender, "No team presidency transfert");
+        require(teams[_address].temporaryTransferAddress == msg.sender, "No team presidency transfert");
         
         // Update team presidency
         updateTeamAddress(_address, msg.sender);
         
-        // Reset waiting
-        teams[msg.sender].temporaryTransfertAddress = nullAdress;
+        // Trigger event: team transfer
+        emit eventTeamTranfer (_address, msg.sender);
     }
 
     function vote (address _address) public {
@@ -306,14 +315,17 @@ using SafeMath for uint256;
         // Update team vote Count
         teams[_address].voteCount ++;
 
-        // Trigger voted event
-        emit votedEvent (_address);
+        // Trigger event: vote
+        emit eventVoted (_address);
     }
     
     function updateTeamAddress (address _formerAddress, address _newAddress) private {
         
         // Duplicate sender's team to receiver address
         teams[_newAddress] = teams[_formerAddress];
+        
+        // Reset waiting
+        teams[_newAddress].temporaryTransferAddress = nullAdress;
         
         // Update Member: secretary
         address memberSecretary = teams[_formerAddress].memberSecretary;
@@ -335,6 +347,7 @@ using SafeMath for uint256;
         
         // Delete former team
         delete teams[_formerAddress];
+        
     }
     
     function updateTeamIsVotable(address _address) private {
