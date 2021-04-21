@@ -20,7 +20,6 @@ using SafeMath for uint256;
         bool hasVoted;
         
         // Team info
-        // string status;
         address teamAddress;
     }
 
@@ -128,6 +127,9 @@ using SafeMath for uint256;
                 teams[teamAddress].memberTresury = nullAdress;
                 teams[teamAddress].hasMemberTresuryJoined = false;
             }
+            
+            // Update team state
+            updateTeamIsVotable(teamAddress);
         }
         
         // Remove participant
@@ -174,9 +176,6 @@ using SafeMath for uint256;
         // Election must not have started
         require(!hasElectionStarted, "Election has already started");
         
-        // President has to be in participants
-        // require(participants[msg.sender].id != 0, "You must be participant");
-        
         // Sender must have created a team
         require(teams[msg.sender].id != 0, "You must have created a team");
         
@@ -202,6 +201,9 @@ using SafeMath for uint256;
     }
 
     function joinTeam (address _address, uint _status) public {
+        
+        // Must be in participants
+        require(participants[msg.sender].id != 0, "Must be participant");
         
         // Election must not have started
         require(!hasElectionStarted, "Election has already started");
@@ -293,6 +295,9 @@ using SafeMath for uint256;
     }
 
     function vote (address _address) public {
+        
+        // Must be in participants
+        require(participants[msg.sender].id != 0, "Must be participant");
         
         // Election must have started
         require(hasElectionStarted, "Election has not started yet");
